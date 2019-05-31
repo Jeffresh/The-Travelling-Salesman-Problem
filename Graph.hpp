@@ -4,7 +4,7 @@
 
 
 // Class used to represent a  weighted graph using an adjacency matrix: 
-
+#include <regex>
 #include <cassert>
 #include <iostream>
 #include <set>
@@ -19,9 +19,14 @@ using namespace std;
 
 
 
+
+
+
 class City
 {
     public:
+
+        City();
 
         City(int n, float x, float y): n{n},x{x},y{y}{}
         friend std::ostream &operator<<(std::ostream& os, const City& c);
@@ -52,13 +57,13 @@ std::ostream &operator<<(std::ostream& os, const City& c)
     
 }
 
-template<typename T>
+
 class Graph
 {
     public:
 
     typedef int Vertex;
-    typedef T** Adjacency_Matrix;
+    typedef float** Adjacency_Matrix;
     typedef std::pair<Vertex,Vertex> Edge;
     typedef std::set<Edge> Edges; 
 
@@ -67,17 +72,22 @@ class Graph
     Graph(Edges); // construct a graph given a set of Edges. // not implemented
     Graph(const char*,const char* ); // contruct a graph given a file that represent the edges.
 
-    Graph(const Graph&); //not implemented
-    Graph& operator =(const Graph&); //not implemented
+    // Graph(const Graph&); //not implemented
+    // Graph& operator =(const Graph&); //not implemented
     
     
     int num_vertices(){ return n_vertices_;};
     int num_edges(){return n_edges_;}
 
-    const int num_vertices()const{ return n_vertices_;};
-    const int num_edges()const{return n_edges_;}
+    int num_vertices()const{ return n_vertices_;};
+    int num_edges()const{return n_edges_;}
+
+    int optimal_cost(){return optimal_cost_;}
+    const int optimal_cost()const{return optimal_cost_;}
 
     Adjacency_Matrix& adMat(){ return am_;}
+    const Adjacency_Matrix& adMat()const{ return am_;}
+
     const Adjacency_Matrix& adlist()const{return am_;};
 
     friend std::ostream &operator<<(std::ostream& os, const Graph& g);
@@ -90,20 +100,19 @@ class Graph
     
     float** am_;
     std::vector<City> cities;
-    vector<pair<int,int>> edges{};
+    vector<pair<int,int>> edges;// tour solution
 
-    float optimal_cost;
+    float optimal_cost_;
     float aproximation_cost;
 
-    size_t n_vertices_;
+    int n_vertices_;
     size_t n_edges_;
 
 
 };
 
 
-template<typename T>
-Graph<T>::Graph(const char* name_file, const char* name_file_tour)
+Graph::Graph(const char* name_file, const char* name_file_tour)
 {
 
 
@@ -114,9 +123,7 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
     std::ifstream myfile(name_file);
 
 
-    int a;
     size_t pos1,pos2, end;
-    const char* b="\0";
     int j =0;
     int n_edges_ = 0;
     int n_vertices_ =0;
@@ -207,10 +214,10 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
 
 
         n_vertices_ = i -7;
-        cout<<"Número de vertices: "<<n_vertices_<<endl;
+        // cout<<"Número de vertices: "<<n_vertices_<<endl;
 
-        for(auto c:cities)
-            cout<<c;
+        // for(auto c:cities)
+        //     cout<<c;
 
        
 
@@ -248,7 +255,7 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
                 am_[o.n-1][d.n-1] = std::numeric_limits<int>::max(); // equals to infinite
             else
             {
-                am_[o.n-1][d.n-1] = sqrt(pow((o.x-d.x)+(o.y-d.y),2));
+                am_[o.n-1][d.n-1] = sqrt(pow((o.x-d.x),2)+pow((o.y-d.y),2));
             }
             
         }
@@ -335,7 +342,7 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
 
                         if(substring!="-1")
                         {
-                            std::cout<<substring<<std::endl;
+                            // std::cout<<substring<<std::endl;
                             city[k]= std::stoi(substring);
                         }
 
@@ -375,14 +382,14 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
 
 
         n_vertices_ = i -7;
-        std::cout<<"Número de vertices: "<<n_vertices_<<endl;
+        // std::cout<<"Número de vertices: "<<n_vertices_<<endl;
 
         // for(auto c:cities)
         //     std::cout<<c;
 
 
-        for(auto c:edges)
-            std::cout<<c.first<<" "<<c.second<<std::endl;
+        // for(auto c:edges)
+        //     std::cout<<c.first<<" "<<c.second<<std::endl;
 
        
 
@@ -408,11 +415,18 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
 
     for(auto e:edges)
     {
-        optimal_cost+= am_[e.first-1][e.second-1];
+        optimal_cost_+= am_[e.first-1][e.second-1];
     }
 
+    optimal_cost_+= am_[edges[edges.size()-1].second][edges[0].first-1 ];
 
-    std::cout<<"Optimal Cost: "<<optimal_cost<<std::endl;
+
+    // std::cout<<"Optimal Cost: "<<optimal_cost<<std::endl;
+
+    // std::cout<<"N edges: "<<edges.size()<<std::endl;
+
+    this->n_vertices_ = edges.size()+1;
+
 
 
 
@@ -423,96 +437,6 @@ Graph<T>::Graph(const char* name_file, const char* name_file_tour)
 
 }
 
-// template<typename T>
-// std::ostream &operator<<(std::ostream& os, const Graph<T>& g)
-// {
-//     int i=0;
-
-//     for(auto lista:g.adl_)
-//     {
-
-//         for(auto nodo:lista)
-//         {
-
-//             os<<"< "<<i<<" , "<<nodo<<" >"<<" ";
-
-//         }
-
-//         os<<'\n'<<std::endl;
-//         i++;
-
-
-//     }
-
-//     return os;
-    
-// }
-
-// void ncol2SAT(const Graph& g, size_t n_col)
-// {
-//     std::ofstream myfile;
-//     myfile.open ("dimacsformatSAT.txt");
-
-//     int i=0;
-//     int n_vertices = g.adl_.size();
-//     int n_edges = 0;
-//     int sub_index =0;
-//     int vert=0;
-//     int nodes = n_col;
-//     int n_combinations = factorial(n_col)/(factorial(2)*factorial(n_col-2));
-
-//     bool mask[nodes];
-
-//     std::fill(mask,mask+nodes,false);
-
-//     for(int i = nodes-1; i> nodes-1-2; i--)
-//       mask[i] = true;
-
-//     myfile << "p cnf "<<n_col*g.n_vertices_<<' '<<(1+n_combinations)*g.n_vertices_+n_col*g.n_edges_<<'\n';
-
-//     for(auto lista:g.adl_)
-//     {
-//         myfile<<"c For each vertex "<<i<<std::endl;
-//         for(size_t j = 1; j <= n_col; j++)
-//         {
-//             myfile<<j+sub_index<<' ';
-//         }
-
-//         myfile<<0<<'\n';
-
-//         do 
-//         {
-//             for(int i = 0; i < n_col; i++)
-//             {
-//                 if(mask[i])
-//                 myfile<<-(i+1+sub_index)<<' ';
-//             }
-//              myfile<<0<<'\n';
-//         } while ( std::next_permutation(mask,mask+nodes) );
-
-                
-
-//         myfile<<"c For each edge "<<i<<std::endl;
-
-//         for(auto nodo:lista)
-//         {
-//             for(size_t j = 1; j <= n_col; j++)
-//                 myfile<<'-'<<(i * n_col+j)<<' '<<'-'<<nodo*n_col+j<<' '<<"0\n";
-            
-//             myfile<<'\n';
-
-//         }
-
-
-
-//         myfile<<'\n';
-//         i++;
-//         sub_index+=n_col;
-
-//     }
-
-//     myfile.close();
-// }
 
 
 #endif
